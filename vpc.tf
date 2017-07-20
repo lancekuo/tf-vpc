@@ -116,3 +116,12 @@ resource "aws_route_table_association" "private-route" {
     subnet_id      = "${element(aws_subnet.private.*.id, count.index)}"
     route_table_id = "${aws_route_table.private.id}"
 }
+
+resource "aws_route53_zone" "internal" {
+    provider = "aws.${var.region}"
+    name     = "${var.project}.internal"
+    vpc_id   = "${aws_vpc.default.id}"
+    tags {
+        Environment = "${terraform.env}"
+    }
+}

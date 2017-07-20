@@ -30,3 +30,6 @@ output "swarm_manager_count" {
 output "swarm_node_count" {
     value = "${var.swarm-node-count}"
 }
+output "internal_zone_id" {
+    value = "${aws_route53_zone.internal.zone_id}"
+}
