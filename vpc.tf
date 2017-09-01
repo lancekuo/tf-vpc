@@ -1,11 +1,11 @@
 resource "aws_vpc" "default" {
     provider = "aws.${var.region}"
-    cidr_block           = "${lookup(var.subnets_map, terraform.env)}"
+    cidr_block           = "${lookup(var.subnets_map, terraform.workspace)}"
     enable_dns_support   = true
     enable_dns_hostnames = true
     tags  {
-        Name              = "${terraform.env}-${var.project}"
-        Env               = "${terraform.env}"
+        Name              = "${terraform.workspace}-${var.project}"
+        Env               = "${terraform.workspace}"
     }
 }
 
@@ -13,8 +13,8 @@ resource "aws_internet_gateway" "default" {
     provider = "aws.${var.region}"
     vpc_id = "${aws_vpc.default.id}"
     tags {
-        Name              = "${terraform.env}-internet-gateway"
-        Env               = "${terraform.env}"
+        Name              = "${terraform.workspace}-internet-gateway"
+        Env               = "${terraform.workspace}"
     }
 }
 
@@ -39,7 +39,7 @@ resource "aws_default_route_table" "public" {
     }
     tags {
         Name              = "public-route"
-        Env               = "${terraform.env}"
+        Env               = "${terraform.workspace}"
     }
 }
 
@@ -52,7 +52,7 @@ resource "aws_route_table" "private" {
     }
     tags {
         Name              = "private-route"
-        Env               = "${terraform.env}"
+        Env               = "${terraform.workspace}"
     }
 }
 
@@ -60,12 +60,12 @@ resource "aws_subnet" "public" {
     provider = "aws.${var.region}"
     count                   = "${var.subnet-on-public}"
     vpc_id                  = "${aws_vpc.default.id}"
-    cidr_block              = "${replace(lookup(var.subnets_map, "${terraform.env}_subnet_template"), "PLACEHOLDER", lookup(var.subnets_map, "bastion_def")+count.index)}"
+    cidr_block              = "${replace(lookup(var.subnets_map, "${terraform.workspace}_subnet_template"), "PLACEHOLDER", lookup(var.subnets_map, "bastion_def")+count.index)}"
     availability_zone       = "${element(data.aws_availability_zones.azs.names, count.index)}"
     map_public_ip_on_launch = true
     tags  {
         Name              = "Bastion-${count.index}"
-        Env               = "${terraform.env}"
+        Env               = "${terraform.workspace}"
     }
     tags {
     }
@@ -74,12 +74,12 @@ resource "aws_subnet" "public-app" {
     provider = "aws.${var.region}"
     count                   = "${var.subnet-per-zone*length(data.aws_availability_zones.azs.names)}"
     vpc_id                  = "${aws_vpc.default.id}"
-    cidr_block              = "${replace(lookup(var.subnets_map, "${terraform.env}_subnet_template"), "PLACEHOLDER", lookup(var.subnets_map, "app_def")+count.index)}"
+    cidr_block              = "${replace(lookup(var.subnets_map, "${terraform.workspace}_subnet_template"), "PLACEHOLDER", lookup(var.subnets_map, "app_def")+count.index)}"
     availability_zone       = "${element(data.aws_availability_zones.azs.names, count.index)}"
     map_public_ip_on_launch = true
     tags {
         Name              = "Public-app-${count.index}"
-        Env               = "${terraform.env}"
+        Env               = "${terraform.workspace}"
     }
 }
 
@@ -87,12 +87,12 @@ resource "aws_subnet" "private" {
     provider = "aws.${var.region}"
     count                   = "${var.subnet-per-zone*length(data.aws_availability_zones.azs.names)}"
     vpc_id                  = "${aws_vpc.default.id}"
-    cidr_block              = "${replace(lookup(var.subnets_map, "${terraform.env}_subnet_template"), "PLACEHOLDER", lookup(var.subnets_map, "private_def")+count.index)}"
+    cidr_block              = "${replace(lookup(var.subnets_map, "${terraform.workspace}_subnet_template"), "PLACEHOLDER", lookup(var.subnets_map, "private_def")+count.index)}"
     availability_zone       = "${element(data.aws_availability_zones.azs.names, count.index)}"
     map_public_ip_on_launch = true
     tags {
         Name              = "Private-${count.index}"
-        Env               = "${terraform.env}"
+        Env               = "${terraform.workspace}"
     }
 }
 
@@ -122,6 +122,6 @@ resource "aws_route53_zone" "internal" {
     name     = "${var.project}.internal"
     vpc_id   = "${aws_vpc.default.id}"
     tags {
-        Environment = "${terraform.env}"
+        Environment = "${terraform.workspace}"
     }
 }
