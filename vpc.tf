@@ -19,6 +19,7 @@ resource "aws_internet_gateway" "default" {
 }
 
 resource "aws_nat_gateway" "default" {
+    count         = "${var.count_private_subnet_per_az > 0 ? 1 : 0}"
     provider      = "aws.${var.aws_region}"
     allocation_id = "${aws_eip.nat.id}"
     subnet_id     = "${aws_subnet.private.0.id}"
@@ -44,6 +45,7 @@ resource "aws_default_route_table" "public" {
 }
 
 resource "aws_route_table" "private" {
+    count    = "${var.count_private_subnet_per_az > 0 ? 1 : 0}"
     provider = "aws.${var.aws_region}"
     vpc_id   = "${aws_vpc.default.id}"
     route {
@@ -70,7 +72,7 @@ resource "aws_subnet" "public-bastion" {
 }
 resource "aws_subnet" "public-app" {
     provider                = "aws.${var.aws_region}"
-    count                   = "${var.count_subnet_per_az*length(data.aws_availability_zones.azs.names)}"
+    count                   = "${var.count_public_subnet_per_az*length(data.aws_availability_zones.azs.names)}"
     vpc_id                  = "${aws_vpc.default.id}"
     cidr_block              = "${replace(lookup(var.subnets_map, "${terraform.workspace}_subnet_template"), "PLACEHOLDER", lookup(var.subnets_map, "app_def")+count.index)}"
     availability_zone       = "${element(data.aws_availability_zones.azs.names, count.index)}"
@@ -83,7 +85,7 @@ resource "aws_subnet" "public-app" {
 
 resource "aws_subnet" "private" {
     provider                = "aws.${var.aws_region}"
-    count                   = "${var.count_subnet_per_az*length(data.aws_availability_zones.azs.names)}"
+    count                   = "${var.count_private_subnet_per_az*length(data.aws_availability_zones.azs.names)}"
     vpc_id                  = "${aws_vpc.default.id}"
     cidr_block              = "${replace(lookup(var.subnets_map, "${terraform.workspace}_subnet_template"), "PLACEHOLDER", lookup(var.subnets_map, "private_def")+count.index)}"
     availability_zone       = "${element(data.aws_availability_zones.azs.names, count.index)}"
@@ -103,14 +105,14 @@ resource "aws_route_table_association" "public-route" {
 
 resource "aws_route_table_association" "public-app-route" {
     provider       = "aws.${var.aws_region}"
-    count          = "${var.count_subnet_per_az*length(data.aws_availability_zones.azs.names)}"
+    count          = "${var.count_public_subnet_per_az*length(data.aws_availability_zones.azs.names)}"
     subnet_id      = "${element(aws_subnet.public-app.*.id, count.index)}"
     route_table_id = "${aws_default_route_table.public.id}"
 }
 
 resource "aws_route_table_association" "private-route" {
     provider       = "aws.${var.aws_region}"
-    count          = "${var.count_subnet_per_az*length(data.aws_availability_zones.azs.names)}"
+    count          = "${var.count_private_subnet_per_az*length(data.aws_availability_zones.azs.names)}"
     subnet_id      = "${element(aws_subnet.private.*.id, count.index)}"
     route_table_id = "${aws_route_table.private.id}"
 }

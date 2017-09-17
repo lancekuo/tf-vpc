@@ -1,7 +1,8 @@
 aws_region                     = "us-east-1"
 project                        = "SampleProject"
 count_bastion_subnet_on_public = 1
-count_subnet_per_az            = 1
+count_public_subnet_per_az     = 1
+count_private_subnet_per_az    = 1
 
 subnets_map = {
         dev                                     = "10.1.0.0/16"
