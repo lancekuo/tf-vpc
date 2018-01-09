@@ -1,10 +1,4 @@
-provider "aws" {
-    alias   = "${var.aws_region}"
-    region  = "${var.aws_region}"
-    profile = "${var.aws_profile}"
-}
 data "aws_availability_zones" "azs" {
-    provider = "aws.${var.aws_region}"
 }
 
 variable "aws_region"                     {}
