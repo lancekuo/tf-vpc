@@ -3,16 +3,16 @@ resource "aws_vpc" "default" {
     enable_dns_support   = true
     enable_dns_hostnames = true
     tags  {
-        Name = "${terraform.workspace}-${var.project}"
-        Env  = "${terraform.workspace}"
+        Name        = "${terraform.workspace}-${var.project}"
+        Environment = "${terraform.workspace}"
     }
 }
 
 resource "aws_internet_gateway" "default" {
     vpc_id   = "${aws_vpc.default.id}"
     tags {
-        Name = "${terraform.workspace}-internet-gateway"
-        Env  = "${terraform.workspace}"
+        Name        = "${terraform.workspace} internet gateway"
+        Environment = "${terraform.workspace}"
     }
 }
 
@@ -20,11 +20,19 @@ resource "aws_nat_gateway" "default" {
     count         = "${var.count_private_subnet_per_az > 0 ? 1 : 0}"
     allocation_id = "${aws_eip.nat.id}"
     subnet_id     = "${aws_subnet.private.0.id}"
+    tags {
+        Name        = "${terraform.workspace} NAT gateway"
+        Environment = "${terraform.workspace}"
+    }
     depends_on    = ["aws_internet_gateway.default"]
 }
 
 resource "aws_eip" "nat" {
     vpc      = true
+    tags {
+        Name        = "${terraform.workspace} NAT gateway"
+        Environment = "${terraform.workspace}"
+    }
 }
 
 resource "aws_default_route_table" "public" {
@@ -34,8 +42,8 @@ resource "aws_default_route_table" "public" {
         gateway_id = "${aws_internet_gateway.default.id}"
     }
     tags {
-        Name = "public-route"
-        Env  = "${terraform.workspace}"
+        Name        = "public-route"
+        Environment = "${terraform.workspace}"
     }
 }
 
@@ -47,8 +55,8 @@ resource "aws_route_table" "private" {
         nat_gateway_id = "${aws_nat_gateway.default.id}"
     }
     tags {
-        Name = "private-route"
-        Env  = "${terraform.workspace}"
+        Name        = "private-route"
+        Environment = "${terraform.workspace}"
     }
 }
 
@@ -59,8 +67,8 @@ resource "aws_subnet" "public-bastion" {
     availability_zone       = "${element(data.aws_availability_zones.azs.names, count.index)}"
     map_public_ip_on_launch = true
     tags  {
-        Name = "Public-Bastion-${count.index}"
-        Env  = "${terraform.workspace}"
+        Name        = "public-bastion-${count.index}"
+        Environment = "${terraform.workspace}"
     }
 }
 resource "aws_subnet" "public-app" {
@@ -70,8 +78,8 @@ resource "aws_subnet" "public-app" {
     availability_zone       = "${element(data.aws_availability_zones.azs.names, count.index)}"
     map_public_ip_on_launch = true
     tags {
-        Name = "Public-app-${count.index}"
-        Env  = "${terraform.workspace}"
+        Name        = "public-app-${count.index}"
+        Environment = "${terraform.workspace}"
     }
 }
 
@@ -82,8 +90,8 @@ resource "aws_subnet" "private" {
     availability_zone       = "${element(data.aws_availability_zones.azs.names, count.index)}"
     map_public_ip_on_launch = false
     tags {
-        Name = "Private-${count.index}"
-        Env  = "${terraform.workspace}"
+        Name        = "private-${count.index}"
+        Environment = "${terraform.workspace}"
     }
 }
 
@@ -105,8 +113,82 @@ resource "aws_route_table_association" "private-route" {
     route_table_id = "${aws_route_table.private.id}"
 }
 
+resource "aws_network_acl" "private" {
+    vpc_id     = "${aws_vpc.default.id}"
+    subnet_ids = ["${aws_subnet.private.*.id}"]
+    ingress {
+        protocol   = "-1"
+        rule_no    = 100
+        action     = "allow"
+        cidr_block = "0.0.0.0/0"
+        from_port  = 0
+        to_port    = 0
+    }
+    egress {
+        protocol   = "-1"
+        rule_no    = 100
+        action     = "allow"
+        cidr_block = "0.0.0.0/0"
+        from_port  = 0
+        to_port    = 0
+    }
+    tags {
+        Name        = "${terraform.workspace}-private-ACL"
+        Environment = "${terraform.workspace}"
+    }
+}
+
+resource "aws_network_acl" "public" {
+    vpc_id     = "${aws_vpc.default.id}"
+    subnet_ids = ["${aws_subnet.public-app.*.id}"]
+    ingress {
+        protocol   = "-1"
+        rule_no    = 100
+        action     = "allow"
+        cidr_block = "0.0.0.0/0"
+        from_port  = 0
+        to_port    = 0
+    }
+    egress {
+        protocol   = "-1"
+        rule_no    = 100
+        action     = "allow"
+        cidr_block = "0.0.0.0/0"
+        from_port  = 0
+        to_port    = 0
+    }
+    tags {
+        Name        = "${terraform.workspace}-public-ACL"
+        Environment = "${terraform.workspace}"
+    }
+}
+
+resource "aws_network_acl" "bastion" {
+    vpc_id     = "${aws_vpc.default.id}"
+    subnet_ids = ["${aws_subnet.public-bastion.*.id}"]
+    ingress {
+        protocol   = "-1"
+        rule_no    = 100
+        action     = "allow"
+        cidr_block = "0.0.0.0/0"
+        from_port  = 0
+        to_port    = 0
+    }
+    egress {
+        protocol   = "-1"
+        rule_no    = 100
+        action     = "allow"
+        cidr_block = "0.0.0.0/0"
+        from_port  = 0
+        to_port    = 0
+    }
+    tags {
+        Name        = "${terraform.workspace}-bastions-ACL"
+        Environment = "${terraform.workspace}"
+    }
+}
 resource "aws_route53_zone" "internal" {
-    name     = "${var.project}.internal"
+    name     = "${terraform.workspace}.${var.project}.internal"
     vpc_id   = "${aws_vpc.default.id}"
     tags {
         Environment = "${terraform.workspace}"

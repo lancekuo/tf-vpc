@@ -1,8 +1,7 @@
 data "aws_availability_zones" "azs" {
 }
 
-variable "aws_region"                     {}
-variable "aws_profile"                    {}
+
 variable "project"                        {}
 variable "count_bastion_subnet_on_public" {}
 variable "count_public_subnet_per_az"     {}
