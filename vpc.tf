@@ -8,6 +8,15 @@ resource "aws_vpc" "default" {
     }
 }
 
+resource "aws_vpc_dhcp_options_association" "custom_domain" {
+    vpc_id          = "${aws_vpc.default.id}"
+    dhcp_options_id = "${aws_vpc_dhcp_options.custom_domain.id}"
+}
+
+resource "aws_vpc_dhcp_options" "custom_domain" {
+  domain_name         = "${terraform.workspace}.${var.project}.internal"
+  domain_name_servers = ["AmazonProvidedDNS"]
+}
 resource "aws_internet_gateway" "default" {
     vpc_id   = "${aws_vpc.default.id}"
     tags {
