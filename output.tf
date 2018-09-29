@@ -18,3 +18,6 @@ output "subnet_private_ids" {
 output "route53_internal_zone_id" {
     value = "${aws_route53_zone.internal.zone_id}"
 }
+output "nat_gateway_id" {
+    value = "${element(aws_nat_gateway.default.*.public_ip, 0)}"
+}

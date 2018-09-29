@@ -19,7 +19,7 @@ resource "aws_internet_gateway" "default" {
 resource "aws_nat_gateway" "default" {
     count         = "${var.count_private_subnet_per_az > 0 ? 1 : 0}"
     allocation_id = "${aws_eip.nat.id}"
-    subnet_id     = "${aws_subnet.private.0.id}"
+    subnet_id     = "${aws_subnet.public-app.0.id}"
     tags {
         Name        = "${terraform.workspace} NAT gateway"
         Environment = "${terraform.workspace}"
