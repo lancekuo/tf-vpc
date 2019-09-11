@@ -2,7 +2,7 @@ resource "aws_vpc" "default" {
     cidr_block           = "${lookup(var.subnets_map, terraform.workspace)}"
     enable_dns_support   = true
     enable_dns_hostnames = true
-    tags  {
+    tags = {
         Name        = "${terraform.workspace}-${var.project}"
         Environment = "${terraform.workspace}"
     }
@@ -19,7 +19,7 @@ resource "aws_vpc_dhcp_options" "custom_domain" {
 }
 resource "aws_internet_gateway" "default" {
     vpc_id   = "${aws_vpc.default.id}"
-    tags {
+    tags = {
         Name        = "${terraform.workspace} internet gateway"
         Environment = "${terraform.workspace}"
     }
@@ -29,7 +29,7 @@ resource "aws_nat_gateway" "default" {
     count         = "${var.count_private_subnet_per_az > 0 ? 1 : 0}"
     allocation_id = "${aws_eip.nat.id}"
     subnet_id     = "${aws_subnet.public-app.0.id}"
-    tags {
+    tags = {
         Name        = "${terraform.workspace} NAT gateway"
         Environment = "${terraform.workspace}"
     }
@@ -38,7 +38,7 @@ resource "aws_nat_gateway" "default" {
 
 resource "aws_eip" "nat" {
     vpc      = true
-    tags {
+    tags = {
         Name        = "${terraform.workspace} NAT gateway"
         Environment = "${terraform.workspace}"
     }
@@ -50,7 +50,7 @@ resource "aws_default_route_table" "public" {
         cidr_block = "0.0.0.0/0"
         gateway_id = "${aws_internet_gateway.default.id}"
     }
-    tags {
+    tags = {
         Name        = "public-route"
         Environment = "${terraform.workspace}"
     }
@@ -63,7 +63,7 @@ resource "aws_route_table" "private" {
         cidr_block     = "0.0.0.0/0"
         nat_gateway_id = "${aws_nat_gateway.default.id}"
     }
-    tags {
+    tags = {
         Name        = "private-route"
         Environment = "${terraform.workspace}"
     }
@@ -75,7 +75,7 @@ resource "aws_subnet" "public-bastion" {
     cidr_block              = "${replace(lookup(var.subnets_map, "${terraform.workspace}_subnet_template"), "PLACEHOLDER", lookup(var.subnets_map, "bastion_def")+count.index)}"
     availability_zone       = "${element(data.aws_availability_zones.azs.names, count.index)}"
     map_public_ip_on_launch = true
-    tags  {
+    tags = {
         Name        = "public-bastion-${count.index}"
         Environment = "${terraform.workspace}"
     }
@@ -86,7 +86,7 @@ resource "aws_subnet" "public-app" {
     cidr_block              = "${replace(lookup(var.subnets_map, "${terraform.workspace}_subnet_template"), "PLACEHOLDER", lookup(var.subnets_map, "app_def")+count.index)}"
     availability_zone       = "${element(data.aws_availability_zones.azs.names, count.index)}"
     map_public_ip_on_launch = true
-    tags {
+    tags = {
         Name        = "public-app-${count.index}"
         Environment = "${terraform.workspace}"
     }
@@ -98,7 +98,7 @@ resource "aws_subnet" "private" {
     cidr_block              = "${replace(lookup(var.subnets_map, "${terraform.workspace}_subnet_template"), "PLACEHOLDER", lookup(var.subnets_map, "private_def")+count.index)}"
     availability_zone       = "${element(data.aws_availability_zones.azs.names, count.index)}"
     map_public_ip_on_launch = false
-    tags {
+    tags = {
         Name        = "private-${count.index}"
         Environment = "${terraform.workspace}"
     }
@@ -141,7 +141,7 @@ resource "aws_network_acl" "private" {
         from_port  = 0
         to_port    = 0
     }
-    tags {
+    tags = {
         Name        = "${terraform.workspace}-private-ACL"
         Environment = "${terraform.workspace}"
     }
@@ -166,7 +166,7 @@ resource "aws_network_acl" "public" {
         from_port  = 0
         to_port    = 0
     }
-    tags {
+    tags = {
         Name        = "${terraform.workspace}-public-ACL"
         Environment = "${terraform.workspace}"
     }
@@ -191,7 +191,7 @@ resource "aws_network_acl" "bastion" {
         from_port  = 0
         to_port    = 0
     }
-    tags {
+    tags = {
         Name        = "${terraform.workspace}-bastions-ACL"
         Environment = "${terraform.workspace}"
     }
@@ -200,7 +200,7 @@ resource "aws_route53_zone" "internal" {
     name     = "${terraform.workspace}.${var.project}.internal"
     vpc_id   = "${aws_vpc.default.id}"
     comment  = "Zone for ${var.project} in ${terraform.workspace}"
-    tags {
+    tags = {
         Environment = "${terraform.workspace}"
     }
 }
