@@ -61,7 +61,7 @@ resource "aws_route_table" "private" {
     vpc_id   = "${aws_vpc.default.id}"
     route {
         cidr_block     = "0.0.0.0/0"
-        nat_gateway_id = "${aws_nat_gateway.default.id}"
+        nat_gateway_id = "${aws_nat_gateway.default[0].id}"
     }
     tags = {
         Name        = "private-route"
@@ -119,12 +119,12 @@ resource "aws_route_table_association" "public-app-route" {
 resource "aws_route_table_association" "private-route" {
     count          = "${var.count_private_subnet_per_az*length(data.aws_availability_zones.azs.names)}"
     subnet_id      = "${element(aws_subnet.private.*.id, count.index)}"
-    route_table_id = "${aws_route_table.private.id}"
+    route_table_id = "${aws_route_table.private[0].id}"
 }
 
 resource "aws_network_acl" "private" {
     vpc_id     = "${aws_vpc.default.id}"
-    subnet_ids = ["${aws_subnet.private.*.id}"]
+    subnet_ids = "${aws_subnet.private.*.id}"
     ingress {
         protocol   = "-1"
         rule_no    = 100
@@ -149,7 +149,7 @@ resource "aws_network_acl" "private" {
 
 resource "aws_network_acl" "public" {
     vpc_id     = "${aws_vpc.default.id}"
-    subnet_ids = ["${aws_subnet.public-app.*.id}"]
+    subnet_ids = "${aws_subnet.public-app.*.id}"
     ingress {
         protocol   = "-1"
         rule_no    = 100
@@ -174,7 +174,7 @@ resource "aws_network_acl" "public" {
 
 resource "aws_network_acl" "bastion" {
     vpc_id     = "${aws_vpc.default.id}"
-    subnet_ids = ["${aws_subnet.public-bastion.*.id}"]
+    subnet_ids = "${aws_subnet.public-bastion.*.id}"
     ingress {
         protocol   = "-1"
         rule_no    = 100
