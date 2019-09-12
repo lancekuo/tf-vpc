@@ -198,7 +198,9 @@ resource "aws_network_acl" "bastion" {
 }
 resource "aws_route53_zone" "internal" {
     name     = "${terraform.workspace}.${var.project}.internal"
-    vpc_id   = "${aws_vpc.default.id}"
+    vpc {
+      vpc_id   = "${aws_vpc.default.id}"
+    }
     comment  = "Zone for ${var.project} in ${terraform.workspace}"
     tags = {
         Environment = "${terraform.workspace}"
