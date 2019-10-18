@@ -1,4 +1,3 @@
-aws_region                     = "us-east-1"
 project                        = "SampleProject"
 count_bastion_subnet_on_public = 1
 count_public_subnet_per_az     = 1

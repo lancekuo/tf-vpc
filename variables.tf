@@ -1,11 +1,12 @@
-data "aws_availability_zones" "azs" {
-}
+data "aws_availability_zones" "azs"       {}
 
-variable "aws_region"                     {}
 variable "project"                        {}
 variable "count_bastion_subnet_on_public" {}
 variable "count_public_subnet_per_az"     {}
 variable "count_private_subnet_per_az"    {}
+variable "k8s_tagging"                    {
+  default = "none"
+}
 
 variable "subnets_map" {
     type    = "map"
@@ -30,3 +31,4 @@ variable "subnets_map" {
         private_def          = 60
     }
 }
+

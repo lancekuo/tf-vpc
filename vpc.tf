@@ -3,7 +3,7 @@ resource "aws_vpc" "default" {
     enable_dns_support   = true
     enable_dns_hostnames = true
     tags = {
-        Name        = "${terraform.workspace}-${var.project}"
+        Name        = "${var.project}-${terraform.workspace}"
         Environment = "${terraform.workspace}"
     }
 }
@@ -87,8 +87,10 @@ resource "aws_subnet" "public-app" {
     availability_zone       = "${element(data.aws_availability_zones.azs.names, count.index)}"
     map_public_ip_on_launch = true
     tags = {
-        Name        = "public-app-${count.index}"
-        Environment = "${terraform.workspace}"
+        "Name"                                     = "public-app-${count.index}"
+        "Environment"                              = "${terraform.workspace}"
+        "kubernetes.io/cluster/${var.k8s_tagging}" = "shared"
+        "kubernetes.io/role/elb"                   = 1
     }
 }
 
@@ -99,8 +101,10 @@ resource "aws_subnet" "private" {
     availability_zone       = "${element(data.aws_availability_zones.azs.names, count.index)}"
     map_public_ip_on_launch = false
     tags = {
-        Name        = "private-${count.index}"
-        Environment = "${terraform.workspace}"
+        "Name"                                     = "private-${count.index}"
+        "Environment"                              = "${terraform.workspace}"
+        "kubernetes.io/cluster/${var.k8s_tagging}" = "shared"
+        "kubernetes.io/role/internal-elb"          = 1
     }
 }
 
